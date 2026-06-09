@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Matappen">
+<title>Matappen</title>
+<style>
+:root{--bg:#0f0f0f;--bg2:#1a1a1a;--bg3:#242424;--bg4:#2e2e2e;--gold:#c9a84c;--gold-lt:#e2c47a;--gold-dk:#8a6a1f;--white:#f0ece4;--muted:#888680;--border:#333230;--red:#c0392b}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom,0)}
+.nav-btn{flex:1;padding:10px 0 8px;border:none;background:none;cursor:pointer;font-size:10px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;letter-spacing:.3px;text-transform:uppercase}
+.nav-btn.active{color:var(--gold)}
+.nav-icon{font-size:20px}
+.page{display:none;padding:0 16px 100px;max-width:480px;margin:0 auto}
+.page.active{display:block}
+.page-header{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,16px) + 12px) 0 18px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.page-title{font-size:24px;font-weight:700;letter-spacing:-.5px;color:var(--white)}
+.page-title span{color:var(--gold)}
+.btn-icon{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);cursor:pointer;font-size:18px;color:var(--gold);display:flex;align-items:center;justify-content:center}
+.card{background:var(--bg2);border-radius:18px;overflow:hidden;margin-bottom:16px;border:1px solid var(--border);cursor:pointer}
+.card:active{border-color:var(--gold-dk)}
+.card-img{width:100%;height:190px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden;position:relative}
+.card-img img{width:100%;height:100%;object-fit:cover}
+.card-img::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,var(--bg2))}
+.card-body{padding:14px 16px 16px}
+.card-title{font-size:17px;font-weight:600;color:var(--white);margin-bottom:6px;line-height:1.3}
+.card-meta{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tag{display:inline-block;background:var(--bg3);border:1px solid var(--gold-dk);color:var(--gold);font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
+.url-card{background:var(--bg2);border-radius:16px;padding:18px;margin-bottom:18px;border:1px solid var(--border)}
+.url-card label{font-size:12px;color:var(--muted);margin-bottom:10px;display:block;text-transform:uppercase;letter-spacing:.6px}
+.url-row{display:flex;gap:10px}
+.url-input{flex:1;border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:14px;outline:none;background:var(--bg3);color:var(--white)}
+.url-input::placeholder{color:var(--muted)}
+.url-input:focus{border-color:var(--gold-dk)}
+.btn-fetch{background:var(--gold);color:#0f0f0f;border:none;border-radius:12px;padding:12px 18px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+.btn-fetch:disabled{background:var(--gold-dk);color:#555;cursor:not-allowed}
+.spinner{display:inline-block;width:15px;height:15px;border:2px solid rgba(0,0,0,.25);border-top-color:#0f0f0f;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.detail-img{width:100%;height:260px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:72px;overflow:hidden;position:relative}
+.detail-img img{width:100%;height:100%;object-fit:cover}
+.detail-img::after{content:'';position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(transparent,var(--bg))}
+.back-btn{position:absolute;top:calc(env(safe-area-inset-top,16px) + 8px);left:14px;background:rgba(0,0,0,.6);color:var(--white);border:1px solid rgba(255,255,255,.15);border-radius:50%;width:40px;height:40px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10}
+.detail-body{padding:8px 16px 110px}
+.section-label{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin:22px 0 10px}
+.ingredient-list{list-style:none}
+.ingredient-item{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:15px;color:var(--white)}
+.ingredient-item:first-child{border-radius:14px 14px 0 0}
+.ingredient-item:last-child{border-bottom:none;border-radius:0 0 14px 14px}
+.ingredient-item:only-child{border-radius:14px}
+.ing-check{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.ing-check.checked{background:var(--gold);border-color:var(--gold);color:#0f0f0f;font-size:13px;font-weight:700}
+.step-item{padding:14px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:15px;line-height:1.7;color:var(--white);display:flex;gap:14px}
+.step-item:first-child{border-radius:14px 14px 0 0}
+.step-item:last-child{border-bottom:none;border-radius:0 0 14px 14px}
+.step-item:only-child{border-radius:14px}
+.step-num{width:28px;height:28px;background:var(--gold);color:#0f0f0f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;margin-top:2px}
+.add-list-btn{width:100%;background:var(--gold);color:#0f0f0f;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;margin-top:20px}
+.shop-add-row{display:flex;gap:10px;margin-bottom:18px}
+.shop-input{flex:1;border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:15px;outline:none;background:var(--bg2);color:var(--white)}
+.shop-input::placeholder{color:var(--muted)}
+.shop-input:focus{border-color:var(--gold-dk)}
+.btn-add-shop{background:var(--gold);color:#0f0f0f;border:none;border-radius:12px;padding:12px 18px;font-size:22px;font-weight:700;cursor:pointer;line-height:1}
+.shop-section-label{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin:16px 0 8px 2px}
+.shop-item{background:var(--bg2);border-radius:12px;display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:8px;border:1px solid var(--border)}
+.shop-item.done{opacity:.4}
+.shop-check{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.shop-check.checked{background:var(--gold);border-color:var(--gold);color:#0f0f0f;font-size:14px;font-weight:700}
+.shop-name{flex:1;font-size:15px;color:var(--white)}
+.shop-name.struck{text-decoration:line-through;color:var(--muted)}
+.shop-from{font-size:10px;color:var(--border);background:var(--bg3);padding:2px 6px;border-radius:8px;white-space:nowrap}
+.del-btn{background:none;border:none;font-size:20px;color:var(--bg4);cursor:pointer;padding:0 2px;line-height:1}
+.clear-btn{width:100%;background:none;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:14px;color:var(--muted);cursor:pointer;margin-top:8px}
+.share-card{background:var(--bg2);border-radius:16px;padding:20px;margin-bottom:14px;border:1px solid var(--border)}
+.share-card-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:12px}
+.household-code{font-size:36px;font-weight:800;letter-spacing:10px;text-align:center;color:var(--gold);background:var(--bg3);border:1px solid var(--gold-dk);border-radius:14px;padding:20px;margin:4px 0 14px}
+.join-row{display:flex;gap:10px;margin-top:10px;align-items:stretch}
+.join-input{flex:1;min-width:0;border:1px solid var(--border);border-radius:12px;padding:12px 8px;font-size:18px;font-weight:800;letter-spacing:4px;outline:none;text-align:center;text-transform:uppercase;background:var(--bg3);color:var(--gold);width:0}
+.join-input:focus{border-color:var(--gold-dk)}
+.btn-join{background:var(--gold);color:#0f0f0f;border:none;border-radius:12px;padding:12px 16px;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap}
+.member-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.member-row:last-child{border-bottom:none}
+.avatar{width:40px;height:40px;border-radius:50%;background:var(--gold);color:#0f0f0f;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0}
+.avatar.you-av{background:var(--bg3);color:var(--gold);border:1px solid var(--gold-dk)}
+.online-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);margin-left:auto}
+.tip-box{background:var(--bg2);border:1px solid var(--gold-dk);border-radius:14px;padding:18px;font-size:13px;color:var(--muted);line-height:2}
+.tip-box strong{color:var(--gold);font-size:14px;display:block;margin-bottom:6px}
+.notif-box{background:var(--bg3);border:1px solid var(--gold-dk);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--gold-lt);margin-bottom:14px;line-height:1.6}
+.recipe-preview{background:var(--bg2);border-radius:18px;overflow:hidden;border:1px solid var(--border);margin-bottom:14px}
+.preview-img{width:100%;height:200px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:60px;overflow:hidden}
+.preview-img img{width:100%;height:100%;object-fit:cover}
+.preview-body{padding:18px}
+.save-btn{width:100%;background:var(--gold);color:#0f0f0f;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;margin-top:14px}
+.discard-btn{width:100%;background:none;border:1px solid var(--border);border-radius:14px;padding:13px;font-size:14px;color:var(--muted);cursor:pointer;margin-top:8px}
+.badge{display:inline-flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);margin-right:5px;margin-top:4px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-state .emo{font-size:56px;margin-bottom:16px}
+.empty-state p{font-size:15px;line-height:1.8}
+.empty-state strong{color:var(--gold)}
+.progress-bar{height:3px;background:var(--bg3);border-radius:3px;margin-top:12px;overflow:hidden}
+.progress-fill{height:100%;background:var(--gold);border-radius:3px;width:0%;transition:width .4s ease}
+.status-text{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="page-recipes" class="page active">
+  <div class="page-header">
+    <div class="page-title"><span>Mat</span>appen</div>
+    <button class="btn-icon" onclick="showPage('add')">＋</button>
+  </div>
+  <div id="recipes-list"></div>
+</div>
+
+<div id="page-add" class="page">
+  <div class="page-header">
+    <button class="btn-icon" onclick="showPage('recipes')">←</button>
+    <div class="page-title">Legg til</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="url-card">
+    <label>Lim inn URL fra matprat.no, godt.no o.l.</label>
+    <div class="url-row">
+      <input id="url-input" class="url-input" type="url" placeholder="https://www.matprat.no/...">
+      <button class="btn-fetch" id="fetch-btn" onclick="fetchRecipe()">Hent</button>
+    </div>
+  </div>
+  <div id="preview-area"></div>
+</div>
+
+<div id="page-detail" class="page" style="padding:0">
+  <div id="detail-content"></div>
+</div>
+
+<div id="page-shopping" class="page">
+  <div class="page-header">
+    <div class="page-title">Handleliste</div>
+    <button class="btn-icon" onclick="clearChecked()" style="font-size:12px;color:var(--muted)">Rydd</button>
+  </div>
+  <div class="shop-add-row">
+    <input id="shop-input" class="shop-input" placeholder="Legg til vare…" onkeydown="if(event.key==='Enter')addShopItem()">
+    <button class="btn-add-shop" onclick="addShopItem()">+</button>
+  </div>
+  <div id="shopping-list"></div>
+</div>
+
+<div id="page-share" class="page">
+  <div class="page-header"><div class="page-title">Del</div></div>
+  <div id="share-content"></div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="showPage('recipes')" id="nav-recipes"><span class="nav-icon">📖</span><span>Oppskrifter</span></button>
+  <button class="nav-btn" onclick="showPage('add')" id="nav-add"><span class="nav-icon">＋</span><span>Legg til</span></button>
+  <button class="nav-btn" onclick="showPage('shopping')" id="nav-shopping"><span class="nav-icon">🛒</span><span>Handle</span></button>
+  <button class="nav-btn" onclick="showPage('share')" id="nav-share"><span class="nav-icon">👥</span><span>Del</span></button>
+</nav>
+
+<script>
+const LS={get:(k)=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let state={recipes:LS.get('mat_recipes')||[],shopping:LS.get('mat_shopping')||[],household:LS.get('mat_household')||null,username:LS.get('mat_username')||null};
+
+function init(){
+  if(!state.username){state.username='Bruker'+Math.floor(Math.random()*9000+1000);LS.set('mat_username',state.username)}
+  if(!state.household){const code=Math.random().toString(36).substr(2,6).toUpperCase();state.household={code,members:[{name:state.username,joined:Date.now()}]};LS.set('mat_household',state.household);LS.set('shared_household_'+code,state.household)}
+  renderRecipes();renderShopping();renderShare();
+  setInterval(syncShared,6000);
+}
+
+const bc=typeof BroadcastChannel!=='undefined'?new BroadcastChannel('matappen'):null;
+if(bc)bc.onmessage=(e)=>{if(e.data.type==='shopping'){state.shopping=e.data.data;LS.set('mat_shopping',state.shopping);renderShopping()}};
+function pushShopping(){LS.set('mat_shopping',state.shopping);if(state.household)LS.set('shared_shopping_'+state.household.code,state.shopping);if(bc)bc.postMessage({type:'shopping',data:state.shopping})}
+function syncShared(){if(!state.household)return;const remote=LS.get('shared_shopping_'+state.household.code);if(!remote)return;const lm=new Map(state.shopping.map(i=>[i.id,i]));const rm=new Map(remote.map(i=>[i.id,i]));for(const[id,item]of rm){if(!lm.has(id)){state.shopping.push(item);lm.set(id,item)}else lm.get(id).checked=item.checked}state.shopping=state.shopping.filter(i=>rm.has(i.id));LS.set('mat_shopping',state.shopping);renderShopping()}
+function showPage(name){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById('page-'+name).classList.add('active');const nb=document.getElementById('nav-'+name);if(nb)nb.classList.add('active')}
+
+// ── RECIPES ──
+function renderRecipes(){
+  const el=document.getElementById('recipes-list');
+  if(!state.recipes.length){el.innerHTML=`<div class="empty-state"><div class="emo">🍴</div><p>Ingen oppskrifter ennå.<br>Trykk <strong>+</strong> og lim inn en URL!</p></div>`;return}
+  el.innerHTML=state.recipes.map((r,i)=>`<div class="card" onclick="openRecipe(${i})"><div class="card-img">${r.image?`<img src="${r.image}" alt="" onerror="this.parentNode.innerHTML='🍽'">` :'🍽'}</div><div class="card-body"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px"><div class="card-title">${r.title}</div><button onclick="event.stopPropagation();deleteRecipe(${i})" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--bg4);padding:0;flex-shrink:0">✕</button></div><div class="card-meta">${r.time?`<span>⏱ ${r.time}</span>`:''}${r.servings?`<span>👥 ${r.servings}</span>`:''}${r.source?`<span class="tag">${r.source}</span>`:''}</div></div></div>`).join('');
+}
+function openRecipe(i){
+  const r=state.recipes[i];
+  document.getElementById('detail-content').innerHTML=`<div class="detail-img">${r.image?`<img src="${r.image}" alt="" onerror="this.parentNode.innerHTML='🍽'">` :'🍽'}<button class="back-btn" onclick="showPage('recipes')">←</button></div><div class="detail-body"><h1 style="font-size:24px;font-weight:700;color:var(--white);margin-bottom:10px;line-height:1.3">${r.title}</h1><div style="margin-bottom:14px">${r.time?`<span class="badge">⏱ ${r.time}</span>`:''}${r.servings?`<span class="badge">👥 ${r.servings}</span>`:''}${r.difficulty?`<span class="badge">📊 ${r.difficulty}</span>`:''}</div>${r.description?`<p style="font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:4px">${r.description}</p>`:''}<div class="section-label">Ingredienser</div><ul class="ingredient-list">${(r.ingredients||[]).map((ing,j)=>`<li class="ingredient-item"><div class="ing-check" id="ic${i}_${j}" onclick="toggleIng(this)"></div><span>${ing}</span></li>`).join('')}</ul><button class="add-list-btn" onclick="addAllToList(${i})">🛒 Legg alle i handleliste</button><div class="section-label">Fremgangsmåte</div><div>${(r.steps||[]).map((step,j)=>`<div class="step-item"><div class="step-num">${j+1}</div><div>${step}</div></div>`).join('')}</div></div>`;
+  showPage('detail');
+}
+function toggleIng(el){el.classList.toggle('checked');el.innerHTML=el.classList.contains('checked')?'✓':''}
+function deleteRecipe(i){if(!confirm('Slett oppskriften?'))return;state.recipes.splice(i,1);LS.set('mat_recipes',state.recipes);renderRecipes()}
+function addAllToList(i){const r=state.recipes[i];(r.ingredients||[]).forEach(ing=>{state.shopping.push({id:Date.now()+Math.random(),name:ing,checked:false,source:r.title})});pushShopping();showPage('shopping')}
+
+// ── FETCH: Two-step approach ──
+// Step 1: Fetch the raw HTML via a CORS proxy
+// Step 2: Send the raw HTML text to Claude to parse out the recipe
+// This bypasses the web_search tool restriction entirely.
+
+function setStatus(msg, pct){
+  const s=document.getElementById('fetch-status');
+  const p=document.getElementById('fetch-progress');
+  if(s)s.textContent=msg;
+  if(p)p.style.width=pct+'%';
+}
+
+async function fetchRecipe(){
+  const urlInput=document.getElementById('url-input');
+  const btn=document.getElementById('fetch-btn');
+  const url=urlInput.value.trim();
+  if(!url||!url.startsWith('http')){alert('Lim inn en gyldig URL (starter med https://)');return}
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Henter…';
+  const area=document.getElementById('preview-area');
+  area.innerHTML=`<div class="recipe-preview"><div class="preview-body" style="text-align:center;padding:28px 20px">
+    <div style="font-size:40px;margin-bottom:14px">🍽</div>
+    <p style="color:var(--white);font-size:15px;font-weight:600;margin-bottom:6px">Henter oppskrift…</p>
+    <p id="fetch-status" class="status-text">Laster siden…</p>
+    <div class="progress-bar"><div class="progress-fill" id="fetch-progress"></div></div>
+  </div></div>`;
+
+  try {
+    // Step 1: try multiple CORS proxies in sequence
+    setStatus('Laster siden…', 15);
+    let html = '';
+    const tryProxy = async (fn, label) => {
+      try { const r = await fn(); if(r && r.length > 500) return r; } catch(e) { console.warn(label, e.message); }
+      return '';
+    };
+    // Proxy 1: corsproxy.io
+    html = await tryProxy(async () => {
+      const r = await fetch('https://corsproxy.io/?' + encodeURIComponent(url));
+      if(!r.ok) throw new Error('status '+r.status);
+      return await r.text();
+    }, 'corsproxy.io');
+    // Proxy 2: allorigins
+    if(!html) html = await tryProxy(async () => {
+      const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url));
+      if(!r.ok) throw new Error('status '+r.status);
+      const d = await r.json(); return d.contents || '';
+    }, 'allorigins');
+    // Proxy 3: codetabs
+    if(!html) html = await tryProxy(async () => {
+      const r = await fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url));
+      if(!r.ok) throw new Error('status '+r.status);
+      return await r.text();
+    }, 'codetabs');
+    if(!html || html.length < 500) throw new Error('Klarte ikke laste siden via noen proxy. Sjekk internettforbindelsen og prøv igjen.');
+
+    setStatus('Analyserer oppskriften med AI…', 45);
+
+    // Step 2: send the HTML to Claude to extract the recipe
+    // Trim HTML to avoid token limits – keep first 18000 chars which covers most recipe pages
+    const trimmedHtml = html.slice(0, 18000);
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: `Her er HTML-innholdet fra en norsk matoppskrift-nettside. Trekk ut oppskriften og svar KUN med et rent JSON-objekt (ingen tekst rundt, ingen markdown, ingen backticks):
+
+{"title":"navn på rett","description":"1-2 setninger om retten","image":"full URL til bilde eller tom streng","time":"tilberedningstid f.eks 40-60 min","servings":"antall porsjoner f.eks 4 porsjoner","difficulty":"enkel eller middels eller avansert","source":"nettstedsnavn","ingredients":["4 stk egg","1 dl soyasaus"],"steps":["Kok eggene i 7 minutter","Avkjøl i kaldt vann"]}
+
+Hvis det ikke er en oppskrift i HTML-en: {"error":"ikke oppskrift"}
+
+HTML:
+${trimmedHtml}`
+        }]
+      })
+    });
+
+    setStatus('Behandler resultatet…', 80);
+    if(!resp.ok){
+      const errData = await resp.json().catch(()=>({}));
+      throw new Error('API-feil '+resp.status+': '+(errData.error?.message||'ukjent feil'));
+    }
+    const data = await resp.json();
+    const allText = (data.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('');
+    if(!allText) throw new Error('Fikk ikke svar fra AI.');
+
+    const recipe = extractJSON(allText);
+    if(!recipe) throw new Error('Klarte ikke tolke AI-svaret. Prøv igjen.');
+    if(recipe.error) throw new Error('Fant ingen oppskrift på denne siden.');
+    if(!recipe.title) throw new Error('Ingen oppskrift funnet. Sjekk at URL-en er en direkte lenke til én oppskrift.');
+
+    // Try to get og:image from HTML if recipe.image is empty
+    if(!recipe.image){
+      const ogMatch = html.match(/property="og:image"\s+content="([^"]+)"/);
+      if(ogMatch) recipe.image = ogMatch[1];
+    }
+
+    recipe.url = url;
+    recipe.addedAt = Date.now();
+    window._pending = recipe;
+    setStatus('Ferdig!', 100);
+
+    area.innerHTML=`<div class="recipe-preview">
+      <div class="preview-img">${recipe.image?`<img src="${recipe.image}" alt="" onerror="this.parentNode.innerHTML='🍽'">` :'🍽'}</div>
+      <div class="preview-body">
+        <h2 style="font-size:20px;font-weight:700;color:var(--white);margin-bottom:10px;line-height:1.3">${recipe.title}</h2>
+        <div style="margin-bottom:12px">${recipe.time?`<span class="badge">⏱ ${recipe.time}</span>`:''}${recipe.servings?`<span class="badge">👥 ${recipe.servings}</span>`:''}${recipe.source?`<span class="tag">${recipe.source}</span>`:''}</div>
+        ${recipe.description?`<p style="font-size:14px;color:var(--muted);margin-bottom:14px;line-height:1.65">${recipe.description}</p>`:''}
+        <div style="font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px">${(recipe.ingredients||[]).length} ingredienser</div>
+        <ul style="list-style:none;font-size:14px;color:var(--white);line-height:2.1">${(recipe.ingredients||[]).slice(0,6).map(i=>`<li style="border-bottom:1px solid var(--border);padding:2px 0">• ${i}</li>`).join('')}${(recipe.ingredients||[]).length>6?`<li style="color:var(--muted);padding-top:4px">+ ${recipe.ingredients.length-6} til…</li>`:''}</ul>
+        <button class="save-btn" onclick="saveRecipe()">💾 Lagre oppskrift</button>
+        <button class="discard-btn" onclick="document.getElementById('preview-area').innerHTML='';document.getElementById('url-input').value=''">Avbryt</button>
+      </div></div>`;
+  } catch(err) {
+    const local = err.message === 'FILE_LOCAL';
+    const msg = local
+      ? 'iPhone blokkerer nettverksforespørsler fra lokale filer. Du må laste opp appen til GitHub Pages (gratis) – se instruksjonsfilen som fulgte med nedlastingen.'
+      : err.message;
+    const icon = local ? '📱' : '😕';
+    const title = local ? 'Appen må hostes på nett' : 'Kunne ikke hente oppskriften';
+    area.innerHTML='<div class="recipe-preview"><div class="preview-body" style="text-align:center;padding:28px 20px">'
+      +'<div style="font-size:44px;margin-bottom:14px">'+icon+'</div>'
+      +'<p style="font-weight:700;color:var(--white);margin-bottom:10px;font-size:16px">'+title+'</p>'
+      +'<p style="font-size:13px;color:var(--muted);line-height:1.8">'+msg+'</p>'
+      +'</div></div>';
+  }
+  btn.disabled=false;btn.innerHTML='Hent';
+}
+
+function extractJSON(text){
+  try{return JSON.parse(text.trim())}catch(e){}
+  try{return JSON.parse(text.replace(/```(?:json)?/gi,'').trim())}catch(e){}
+  const s=text.indexOf('{'),en=text.lastIndexOf('}');
+  if(s!==-1&&en>s){try{return JSON.parse(text.slice(s,en+1))}catch(e){}}
+  return null;
+}
+
+function saveRecipe(){
+  if(!window._pending)return;
+  state.recipes.unshift(window._pending);LS.set('mat_recipes',state.recipes);
+  window._pending=null;document.getElementById('preview-area').innerHTML='';document.getElementById('url-input').value='';
+  renderRecipes();showPage('recipes');
+}
+
+// ── SHOPPING ──
+function renderShopping(){
+  const el=document.getElementById('shopping-list');
+  const unc=state.shopping.filter(i=>!i.checked);const chk=state.shopping.filter(i=>i.checked);
+  if(!state.shopping.length){el.innerHTML=`<div class="empty-state"><div class="emo">🛒</div><p>Handlelisten er tom.<br>Hent fra en oppskrift eller legg til manuelt.</p></div>`;return}
+  let html='';
+  if(unc.length){html+=`<div class="shop-section-label">${unc.length} vare${unc.length!==1?'r':''} igjen</div>`;html+=unc.map(shopHTML).join('')}
+  if(chk.length){html+=`<div class="shop-section-label" style="margin-top:18px">I kurven (${chk.length})</div>`;html+=chk.map(shopHTML).join('')}
+  html+=`<button class="clear-btn" onclick="clearChecked()">Fjern avhukede varer</button>`;
+  el.innerHTML=html;
+}
+function shopHTML(item){return`<div class="shop-item ${item.checked?'done':''}"><div class="shop-check ${item.checked?'checked':''}" onclick="toggleShop('${item.id}')">${item.checked?'✓':''}</div><span class="shop-name ${item.checked?'struck':''}">${item.name}</span>${item.source?`<span class="shop-from">${item.source}</span>`:''}<button class="del-btn" onclick="removeShop('${item.id}')">×</button></div>`}
+function toggleShop(id){const it=state.shopping.find(i=>String(i.id)===String(id));if(it)it.checked=!it.checked;pushShopping();renderShopping()}
+function removeShop(id){state.shopping=state.shopping.filter(i=>String(i.id)!==String(id));pushShopping();renderShopping()}
+function addShopItem(){const inp=document.getElementById('shop-input');const val=inp.value.trim();if(!val)return;state.shopping.unshift({id:Date.now()+Math.random(),name:val,checked:false});inp.value='';pushShopping();renderShopping()}
+function clearChecked(){state.shopping=state.shopping.filter(i=>!i.checked);pushShopping();renderShopping()}
+
+// ── SHARE ──
+function renderShare(){
+  const h=state.household;
+  document.getElementById('share-content').innerHTML=`
+    <div class="notif-box">✨ Del koden med samboeren din – da ser dere handlelisten live!</div>
+    <div class="share-card"><div class="share-card-title">Din husholdningskode</div><div class="household-code">${h.code}</div><div style="font-size:13px;color:var(--muted);text-align:center;line-height:1.7">Send denne koden til samboeren din.<br>Handlelisten synkroniseres automatisk.</div></div>
+    <div class="share-card"><div class="share-card-title">Bli med i husholdning</div><div style="font-size:13px;color:var(--muted);margin-bottom:4px">Har du fått en kode? Skriv den inn her:</div><div class="join-row"><input id="join-input" class="join-input" maxlength="6" placeholder="KODE"><button class="btn-join" onclick="joinHousehold()">Koble til</button></div></div>
+    <div class="share-card"><div class="share-card-title">Medlemmer</div>${h.members.map(m=>`<div class="member-row"><div class="avatar ${m.name===state.username?'you-av':''}">${m.name[0].toUpperCase()}</div><div><div style="font-size:15px;font-weight:600;color:var(--white)">${m.name}${m.name===state.username?' <span style="color:var(--gold);font-size:12px">(deg)</span>':''}</div><div style="font-size:12px;color:var(--muted)">Ble med ${new Date(m.joined).toLocaleDateString('no-NO')}</div></div><div class="online-dot"></div></div>`).join('')}</div>
+    <div class="tip-box"><strong>📱 Slik installerer du på iPhone</strong>1. Åpne filen i <strong style="color:var(--white)">Safari</strong><br>2. Trykk Del-knappen ↑ nederst<br>3. Velg «Legg til på Hjem-skjerm»<br>4. Trykk «Legg til» — ferdig! 🎉</div>`;
+}
+function joinHousehold(){
+  const code=(document.getElementById('join-input').value||'').trim().toUpperCase();
+  if(!code||code.length<4){alert('Skriv inn koden fra samboeren din');return}
+  const stored=LS.get('shared_household_'+code);
+  if(stored){if(!stored.members.find(m=>m.name===state.username))stored.members.push({name:state.username,joined:Date.now()});LS.set('shared_household_'+code,stored);state.household=stored;LS.set('mat_household',state.household);const rs=LS.get('shared_shopping_'+code);if(rs){state.shopping=rs;LS.set('mat_shopping',state.shopping);renderShopping()}renderShare();alert('✅ Koblet til husholdningen!')}
+  else{alert('Fant ingen husholdning med koden «'+code+'».')}
+}
+
+init();
+</script>
+</body>
+</html>
